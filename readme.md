@@ -5,6 +5,7 @@
 - Install [Go](https://go.dev/dl/)
 - Install [Go VS Code Extension](https://marketplace.visualstudio.com/items?itemName=golang.Go)
 - Install [air](https://github.com/cosmtrek/air)
+- Add the `.env` file
 
 ## Run the Project
 

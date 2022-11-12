@@ -1,68 +1,99 @@
 package main
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"context"
+	"fmt"
+	"log"
+	"os"
+	"time"
 
-type Error struct {
-	Message string
+	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+)
+
+func EnvMongoURI() string {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	return os.Getenv("MONGO_URI")
 }
+
+func ConnectDB() *mongo.Client {
+	client, err := mongo.NewClient(options.Client().ApplyURI(EnvMongoURI()))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	err = client.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//ping the database
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Connected to MongoDB")
+	return client
+}
+
+// Client instance
+var DB *mongo.Client = ConnectDB()
+
+// getting database collections
+func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
+	collection := client.Database("golangAPI").Collection(collectionName)
+	return collection
+}
+
 type Country struct {
-	Name string
-	CapitalCity string
-	CurrencyName string
+	Id          primitive.ObjectID `json:"id,omitempty"`
+	Name        string             `json:"name,omitempty" validate:"required"`
+	CapitalCity string             `json:"capitalCity,omitempty" validate:"required"`
+	Currency    string             `json:"currency,omitempty" validate:"required"`
 }
 
-func getAllCountries() []Country {
-	countries:= []Country{
-		{"Indonesia","Jakarta","Rupiah"},
-		{"Malaysia","Kuala Lumpur","Ringgit"},
-		{"India","New Delhi","Rupee"},
+var countryCollection *mongo.Collection = GetCollection(DB, "countries")
+
+func countries(c *fiber.Ctx) error {
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+
+	results, _ := countryCollection.Find(ctx, bson.M{})
+
+	var countries []Country
+
+	// reading from the db in an optimal way
+	defer results.Close(ctx)
+
+	for results.Next(ctx) {
+		var country Country
+
+		results.Decode(&country)
+
+		countries = append(countries, country)
 	}
 
-	return countries
-}
-
-func countries(ctx *fiber.Ctx) error {
-	return ctx.Status(fiber.StatusOK).JSON(getAllCountries())
-}
-
-func searchCountry(ctx *fiber.Ctx) error {
-	var country Country
-
-	allCountries:= getAllCountries()
-
-	nameQuery:= ctx.Params("name")
-
-	for i := range allCountries {
-		if allCountries[i].Name == nameQuery {
-			country = allCountries[i]
-
-			break
-		}
-	}
-	
-	if (country == Country{}) {
-		return ctx.Status(fiber.StatusNotFound).JSON(Error {
-			"Country with name " + nameQuery + " not found" ,
-		})
-	}
-
-	return ctx.Status(fiber.StatusOK).JSON(country)
+	return c.Status(fiber.StatusOK).JSON(countries)
 }
 
 func main() {
 	app := fiber.New()
 
+	ConnectDB()
+
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Countries API")
 	})
 
-	app.Get("/countries/:name?", func(c *fiber.Ctx) error {
-		if (c.Params(("name")) != "") {
-			return searchCountry(c)
-		} else {
-			return countries(c)
-		}
-	})
+	app.Get("/countries/:name?", countries)
 
 	app.Listen(":3000")
 }
