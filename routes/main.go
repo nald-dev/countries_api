@@ -11,5 +11,7 @@ func MainRoute(app *fiber.App) {
 		return c.SendString("Countries API")
 	})
 
+	app.Post("/register", controllers.CreateUser)
+
 	app.Get("/countries/:name?", controllers.Countries)
 }

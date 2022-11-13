@@ -1,7 +1,6 @@
 package main
 
 import (
-	"countries_api/configs"
 	"countries_api/routes"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,8 +8,6 @@ import (
 
 func main() {
 	app := fiber.New()
-
-	configs.ConnectDB()
 
 	routes.MainRoute(app)
 
