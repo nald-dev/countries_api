@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func CreateUser(c *fiber.Ctx) error {
@@ -29,11 +30,14 @@ func CreateUser(c *fiber.Ctx) error {
 
 	UserCollection.InsertOne(ctx, newUser)
 
-	UserCollection.FindOne(ctx, bson.M{"username": user.Username}).Decode(&user)
+	findOptions := options.FindOne()
+	findOptions.SetProjection(bson.M{"password": 0})
 
-	newUser.Password = ""
+	var userDataForResponse models.User
 
-	return helpers.ProvideResponse(c, fiber.StatusOK, "Success", newUser)
+	UserCollection.FindOne(ctx, bson.M{"username": newUser.Username}, findOptions).Decode(&userDataForResponse)
+
+	return helpers.ProvideResponse(c, fiber.StatusOK, "Success", userDataForResponse)
 }
 
 func Login(c *fiber.Ctx) error {
