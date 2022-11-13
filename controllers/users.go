@@ -4,9 +4,11 @@ import (
 	"context"
 	"countries_api/helpers"
 	"countries_api/models"
+	"net/http"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -28,5 +30,12 @@ func CreateUser(c *fiber.Ctx) error {
 
 	UserCollection.InsertOne(ctx, newUser)
 
-	return c.Status(fiber.StatusOK).JSON(newUser)
+	return c.Status(fiber.StatusOK).JSON(models.Response{
+		Status:  http.StatusOK,
+		Message: "Success",
+		Data: bson.M{
+			"id":       newUser.Id,
+			"username": newUser.Username,
+		},
+	})
 }

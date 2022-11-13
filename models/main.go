@@ -1,6 +1,14 @@
 package models
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+type Response struct {
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Data    primitive.M `json:"data"`
+}
 
 type User struct {
 	Id       primitive.ObjectID `json:"id,omitempty"`

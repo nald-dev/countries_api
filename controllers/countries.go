@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"countries_api/models"
+	"net/http"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -27,5 +28,9 @@ func Countries(c *fiber.Ctx) error {
 		countries = append(countries, country)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(countries)
+	return c.Status(fiber.StatusOK).JSON(models.Response{
+		Status:  http.StatusOK,
+		Message: "Success",
+		Data:    bson.M{"items": countries},
+	})
 }
