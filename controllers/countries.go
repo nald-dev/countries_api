@@ -4,6 +4,7 @@ import (
 	"context"
 	"countries_api/helpers"
 	"countries_api/models"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,19 +14,50 @@ import (
 func Countries(c *fiber.Ctx) error {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
-	results, _ := CountryCollection.Find(ctx, bson.M{})
+	countryNameToSearch := c.Query("name")
 
-	var countries []models.Country
+	if countryNameToSearch == "" {
+		results, _ := CountryCollection.Find(ctx, bson.M{})
 
-	defer results.Close(ctx)
+		var countries []models.Country
 
-	for results.Next(ctx) {
-		var country models.Country
+		defer results.Close(ctx)
 
-		results.Decode(&country)
+		for results.Next(ctx) {
+			var country models.Country
 
-		countries = append(countries, country)
+			results.Decode(&country)
+
+			countries = append(countries, country)
+		}
+
+		return helpers.ProvideResponse(c, fiber.StatusOK, "Success", bson.M{"items": countries})
+	} else {
+		var countryFound models.Country
+
+		results, _ := CountryCollection.Find(ctx, bson.M{})
+
+		for results.Next(ctx) {
+			var country models.Country
+
+			results.Decode(&country)
+
+			if strings.ToLower(strings.Trim(countryNameToSearch, " ")) == strings.ToLower(country.Name) {
+				countryFound = country
+
+				break
+			}
+		}
+
+		if (countryFound == models.Country{}) {
+			return helpers.ProvideResponse(c, fiber.StatusNotFound, "Failed, country with name '"+countryNameToSearch+"' doesn't exist", bson.M{})
+		} else {
+			return helpers.ProvideResponse(c, fiber.StatusOK, "Success", bson.M{
+				"id":          countryFound.Id,
+				"name":        countryFound.Name,
+				"capitalCity": countryFound.CapitalCity,
+				"currency":    countryFound.Currency,
+			})
+		}
 	}
-
-	return helpers.ProvideResponse(c, fiber.StatusOK, "Success", bson.M{"items": countries})
 }

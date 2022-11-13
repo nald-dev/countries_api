@@ -14,5 +14,5 @@ func MainRoute(app *fiber.App) {
 	app.Post("/register", controllers.CreateUser)
 	app.Post("/login", controllers.Login)
 
-	app.Get("/countries/:name?", controllers.Countries)
+	app.Get("/countries", controllers.Countries)
 }
