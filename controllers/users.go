@@ -31,10 +31,9 @@ func CreateUser(c *fiber.Ctx) error {
 
 	UserCollection.FindOne(ctx, bson.M{"username": user.Username}).Decode(&user)
 
-	return helpers.ProvideResponse(c, fiber.StatusOK, "Success", bson.M{
-		"id":       newUser.Id,
-		"username": newUser.Username,
-	})
+	newUser.Password = ""
+
+	return helpers.ProvideResponse(c, fiber.StatusOK, "Success", newUser)
 }
 
 func Login(c *fiber.Ctx) error {
@@ -60,9 +59,8 @@ func Login(c *fiber.Ctx) error {
 	if (userFound == models.User{} || !helpers.CheckPasswordHash(user.Password, userFound.Password)) {
 		return helpers.ProvideResponse(c, fiber.StatusBadRequest, "Failed, wrong username or password", bson.M{})
 	} else {
-		return helpers.ProvideResponse(c, fiber.StatusOK, "Success", bson.M{
-			"id":       userFound.Id,
-			"username": userFound.Username,
-		})
+		userFound.Password = ""
+
+		return helpers.ProvideResponse(c, fiber.StatusOK, "Success", userFound)
 	}
 }

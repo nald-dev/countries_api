@@ -7,7 +7,7 @@ import (
 type Response struct {
 	Status  int         `json:"status"`
 	Message string      `json:"message"`
-	Data    primitive.M `json:"data"`
+	Data    interface{} `json:"data"`
 }
 
 type User struct {

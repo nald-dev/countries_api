@@ -31,7 +31,7 @@ func Countries(c *fiber.Ctx) error {
 			countries = append(countries, country)
 		}
 
-		return helpers.ProvideResponse(c, fiber.StatusOK, "Success", bson.M{"items": countries})
+		return helpers.ProvideResponse(c, fiber.StatusOK, "Success", countries)
 	} else {
 		var countryFound models.Country
 
@@ -52,12 +52,7 @@ func Countries(c *fiber.Ctx) error {
 		if (countryFound == models.Country{}) {
 			return helpers.ProvideResponse(c, fiber.StatusNotFound, "Failed, country with name '"+countryNameToSearch+"' doesn't exist", bson.M{})
 		} else {
-			return helpers.ProvideResponse(c, fiber.StatusOK, "Success", bson.M{
-				"id":          countryFound.Id,
-				"name":        countryFound.Name,
-				"capitalCity": countryFound.CapitalCity,
-				"currency":    countryFound.Currency,
-			})
+			return helpers.ProvideResponse(c, fiber.StatusOK, "Success", countryFound)
 		}
 	}
 }
