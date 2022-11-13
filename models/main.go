@@ -11,13 +11,13 @@ type Response struct {
 }
 
 type User struct {
-	Id       primitive.ObjectID `json:"id,omitempty"`
+	Id       primitive.ObjectID `json:"_id" bson:"_id"`
 	Username string             `json:"username,omitempty" validate:"required"`
 	Password string             `json:"password,omitempty" validate:"required"`
 }
 
 type Country struct {
-	Id          primitive.ObjectID `json:"id,omitempty"`
+	Id          primitive.ObjectID `json:"_id" bson:"_id"`
 	Name        string             `json:"name,omitempty" validate:"required"`
 	CapitalCity string             `json:"capitalCity,omitempty" validate:"required"`
 	Currency    string             `json:"currency,omitempty" validate:"required"`

@@ -29,13 +29,11 @@ func CreateUser(c *fiber.Ctx) error {
 
 	UserCollection.InsertOne(ctx, newUser)
 
-	return c.Status(fiber.StatusOK).JSON(models.Response{
-		Status:  fiber.StatusOK,
-		Message: "Success",
-		Data: bson.M{
-			"id":       newUser.Id,
-			"username": newUser.Username,
-		},
+	UserCollection.FindOne(ctx, bson.M{"username": user.Username}).Decode(&user)
+
+	return helpers.ProvideResponse(c, fiber.StatusOK, "Success", bson.M{
+		"id":       newUser.Id,
+		"username": newUser.Username,
 	})
 }
 
