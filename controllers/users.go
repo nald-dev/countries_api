@@ -4,7 +4,6 @@ import (
 	"context"
 	"countries_api/helpers"
 	"countries_api/models"
-	"net/http"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -31,7 +30,7 @@ func CreateUser(c *fiber.Ctx) error {
 	UserCollection.InsertOne(ctx, newUser)
 
 	return c.Status(fiber.StatusOK).JSON(models.Response{
-		Status:  http.StatusOK,
+		Status:  fiber.StatusOK,
 		Message: "Success",
 		Data: bson.M{
 			"id":       newUser.Id,
@@ -48,24 +47,24 @@ func Login(c *fiber.Ctx) error {
 
 	c.BodyParser(&user)
 
+	if user.Username == "" {
+		return helpers.ProvideResponse(c, fiber.StatusBadRequest, "Failed, please provide the 'username'", bson.M{})
+	}
+
+	if user.Password == "" {
+		return helpers.ProvideResponse(c, fiber.StatusBadRequest, "Failed, please provide the 'password'", bson.M{})
+	}
+
 	var userFound models.User
 
 	UserCollection.FindOne(ctx, bson.M{"username": user.Username}).Decode(&userFound)
 
-	if helpers.CheckPasswordHash(user.Password, userFound.Password) {
-		return c.Status(fiber.StatusOK).JSON(models.Response{
-			Status:  http.StatusOK,
-			Message: "Success",
-			Data: bson.M{
-				"id":       userFound.Id,
-				"username": userFound.Username,
-			},
-		})
+	if (userFound == models.User{} || !helpers.CheckPasswordHash(user.Password, userFound.Password)) {
+		return helpers.ProvideResponse(c, fiber.StatusBadRequest, "Failed, wrong username or password", bson.M{})
 	} else {
-		return c.Status(fiber.StatusNotFound).JSON(models.Response{
-			Status:  http.StatusNotFound,
-			Message: "Failure",
-			Data:    bson.M{},
+		return helpers.ProvideResponse(c, fiber.StatusOK, "Success", bson.M{
+			"id":       userFound.Id,
+			"username": userFound.Username,
 		})
 	}
 }
