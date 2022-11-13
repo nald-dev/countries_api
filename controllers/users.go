@@ -39,3 +39,33 @@ func CreateUser(c *fiber.Ctx) error {
 		},
 	})
 }
+
+func Login(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
+	var user models.User
+	defer cancel()
+
+	c.BodyParser(&user)
+
+	var userFound models.User
+
+	UserCollection.FindOne(ctx, bson.M{"username": user.Username}).Decode(&userFound)
+
+	if helpers.CheckPasswordHash(user.Password, userFound.Password) {
+		return c.Status(fiber.StatusOK).JSON(models.Response{
+			Status:  http.StatusOK,
+			Message: "Success",
+			Data: bson.M{
+				"id":       userFound.Id,
+				"username": userFound.Username,
+			},
+		})
+	} else {
+		return c.Status(fiber.StatusNotFound).JSON(models.Response{
+			Status:  http.StatusNotFound,
+			Message: "Failure",
+			Data:    bson.M{},
+		})
+	}
+}
